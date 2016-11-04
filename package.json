@@ -1,0 +1,57 @@
+{
+  "author": {
+    "email": "microservicebus@xlent.se",
+    "name": "microServiceBus.com",
+    "url": "https://microservicebus.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "1.14.1",
+    "chokidar": "1.0.5",
+    "exists-sync": "0.0.3",
+    "express": "4.13.3",
+    "extend": "3.0.0",
+    "linq": "3.0.5",
+    "node-persist": "0.0.6",
+    "request": "2.65.0"
+  },
+  "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
+  "bin": {},
+  "main": "MicroServiceBusNode.js",
+  "devDependencies": {
+    "async": "^2.1.2",
+    "colors": "^1.1.2",
+    "extend": "^3.0.0",
+    "fs": "0.0.1-security",
+    "keypress": "^0.2.1",
+    "moment": "^2.15.2",
+    "npm": "^3.10.9",
+    "os": "^0.1.1",
+    "require-reload": "^0.2.2",
+    "uuid": "^2.0.3"
+  },
+  "engines": {
+    "node": ">=0.12.0 <6.3.1"
+  },
+  "keywords": [
+    "IoT",
+    "Integration",
+    "Micro Services",
+    "MicroServices",
+    "microServiceBus",
+    "Cloud",
+    "AZURE",
+    "AZURE IOT"
+  ],
+  "name": "microservicebus.core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microServiceBus/microservicebus.core"
+  },
+  "scripts": {
+    "lint": "jshint Utils.js",
+    "succcess": "mocha Tests/successfulSignIn.js",
+    "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
+  },
+  "version": "0.0.9"
+}
