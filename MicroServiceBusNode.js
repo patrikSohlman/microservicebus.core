@@ -209,38 +209,7 @@ function MicroServiceBusNode(settings) {
                 }
             });
 
-            if (settings.enableKeyPress != false) {
-                keypress(process.stdin);
-
-                // listen for the "keypress" event
-                process.stdin.on('keypress', function (ch, key) {
-                    if (key.ctrl && key.name == 'c') {
-                        gracefulShutdown();
-                    }
-                    else if (key.name == 'p') {
-                        OnPing();
-                    }
-                    else if (key.name == 'i') {
-                        self.onLog("Active services: ".green + _inboundServices.length);
-                    }
-                    else if (key.name == 'd') {
-                        try {
-                            var heapdump = require('heapdump');
-                            heapdump.writeSnapshot(function (err, filename) {
-                                self.onLog('Dump written to'.yellow, filename.yellow);
-                            });
-                        }
-                        catch (e) {
-                            self.onLog(e);
-                        }
-                    }
-                });
-                process.stdin.setRawMode(true);
-                process.stdin.resume();
-            }
-            else {
-                port = process.env.PORT || 1337;
-            }
+            port = process.env.PORT || 1337;
         }
         else {
             com.Update(response);
@@ -815,7 +784,7 @@ function MicroServiceBusNode(settings) {
                             if (!_startWebServer) {
                                 http = require('http');
                                 express = require('express');
-                                swaggerize = require('swaggerize-express');
+                                //swaggerize = require('swaggerize-express');
                                 bodyParser = require('body-parser');
                                 app = express();
 
