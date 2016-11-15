@@ -40,6 +40,7 @@ var Com = require("./lib/Com.js");
 
 function MicroServiceBusNode(settings) {
     var self = this;
+    this.settings = settings;
     // Callbacks
     this.onStarted = null;
     this.onStopped = null;
@@ -50,9 +51,7 @@ function MicroServiceBusNode(settings) {
     this.onCreateNode = null;
 
     // Handle settings
-    var temporaryVerificationCode;
-    var existingHostName;
-    var hostPrefix = 'nodeJs'; // Used for creating new hosts
+    var hostPrefix = 'agent'; // Used for creating new hosts
     var _itineraries; // all downloaded itineries for this host
     var _inboundServices = []; // all started services
     var _hasDisconnected = false;
@@ -81,7 +80,7 @@ function MicroServiceBusNode(settings) {
     var bodyParser;
     var memwatch;
     var logStream;
-
+    this.nodeVersion;
     // Called by HUB if it was ot able to process the request
     MicroServiceBusNode.prototype.ErrorMessage = function (message) {
         self.onLog("errorMessage => " + message);
@@ -227,20 +226,10 @@ function MicroServiceBusNode(settings) {
     /* istanbul ignore next */
     MicroServiceBusNode.prototype.NodeCreated = function (nodeData) {
 
-        nodeData.machineName = os.hostname();
-
-        settings = extend(settings, nodeData);
-
-        self.onLog(' Successfully created node: ' + nodeData.nodeName);
-
-        var data = JSON.stringify(settings);
-
-        fs.writeFileSync(rootFolder + '/settings.json', data);
-
-        signIn();
+        self.SignIn();
     }
     // Signing in the to HUB
-    MicroServiceBusNode.prototype.SignIn = function () {
+    MicroServiceBusNode.prototype.SignIn = function (newNodeName, temporaryVerificationCode) {
 
         // Logging in using code
         if (settings.nodeName == null || settings.nodeName.length == 0) { // jshint ignore:line
@@ -253,7 +242,7 @@ function MicroServiceBusNode(settings) {
                 this.onCreateNode(
                     temporaryVerificationCode,
                     hostPrefix,
-                    existingHostName
+                    newNodeName
                 );
             }
         }
@@ -264,7 +253,7 @@ function MicroServiceBusNode(settings) {
                 Name: settings.nodeName,
                 machineName: settings.machineName,
                 OrganizationID: settings.organizationId,
-                npmVersion: pjson.version
+                npmVersion: this.nodeVersion
             };
 
             this.onSignedIn(hostData);

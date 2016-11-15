@@ -51,7 +51,6 @@
     <Content Include=".npmignore" />
     <Content Include="package.json" />
     <Content Include="README.md" />
-    <Content Include="lib\settings.json" />
     <Content Include="lib\templates\swagger.json" />
     <Content Include="lib\templates\swaggerPathTemplate.json" />
     <Content Include="lib\templates\swaggerTemplate.json" />
