@@ -166,6 +166,7 @@ function MicroServiceBusNode(settings) {
         settings.state = response.state;
         settings.debug = response.debug;
         settings.port = response.port == null ? 80 : response.port;
+        settings.tags = response.tags;
         _comSettings = response;
 
         if (settings.state == "Active")
@@ -504,7 +505,14 @@ function MicroServiceBusNode(settings) {
                 for (var i = 0; i < itinerary.activities.length; i++) {
                     if (itinerary.activities[i].userData.config != undefined) {
                         var host = itinerary.activities[i].userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value;
+
                         if (host == settings.nodeName) {
+                            intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
+                        }
+                        else if (settings.tags.find(function (tag) { return tag === host }).length > 0) {
+                            if (itinerary.activities[i].userData.baseType === 'onewayreceiveadapter' || itinerary.activities[i].userData.baseType === 'twowayreceiveadapter') {
+                                itinerary.activities[i].userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value = settings.nodeName;
+                            }
                             intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
                         }
                     }
