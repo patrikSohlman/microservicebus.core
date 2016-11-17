@@ -51,7 +51,7 @@ function MicroServiceBusNode(settings) {
     this.onCreateNode = null;
 
     // Handle settings
-    var hostPrefix = 'agent'; // Used for creating new hosts
+    var hostPrefix = 'node'; // Used for creating new hosts
     var _itineraries; // all downloaded itineries for this host
     var _inboundServices = []; // all started services
     var _hasDisconnected = false;
