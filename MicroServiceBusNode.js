@@ -509,11 +509,14 @@ function MicroServiceBusNode(settings) {
                         if (host == settings.nodeName) {
                             intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
                         }
-                        else if (settings.tags.find(function (tag) { return tag === host }).length > 0) {
-                            if (itinerary.activities[i].userData.baseType === 'onewayreceiveadapter' || itinerary.activities[i].userData.baseType === 'twowayreceiveadapter') {
-                                itinerary.activities[i].userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value = settings.nodeName;
+                        else if (settings.tags !== undefined) {
+                            var tags = settings.tags.find(function (tag) { return tag === host });
+                            if (tags !== undefined && tags.length > 0) {
+                                if (itinerary.activities[i].userData.baseType === 'onewayreceiveadapter' || itinerary.activities[i].userData.baseType === 'twowayreceiveadapter') {
+                                    itinerary.activities[i].userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value = settings.nodeName;
+                                }
+                                intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
                             }
-                            intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
                         }
                     }
                 }
