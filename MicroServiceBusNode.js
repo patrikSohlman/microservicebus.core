@@ -34,7 +34,7 @@ var guid = require('uuid');
 var pjson = require('./package.json');
 var keypress = require('keypress');
 var Applicationinsights = require("./lib/Applicationinsights.js");
-var util = require('./lib/Utils.js');
+var util = require('../../lib/Utils.js');
 var MicroService = require('./lib/services/microService.js');
 var Com = require("./lib/Com.js");
 

@@ -6,14 +6,19 @@
   },
   "license": "MIT",
   "dependencies": {
+    "colors": "1.1.2",
     "body-parser": "1.14.1",
     "chokidar": "1.0.5",
     "exists-sync": "0.0.3",
     "express": "4.13.3",
     "extend": "3.0.0",
+    "keypress": "^0.2.1",
     "linq": "3.0.5",
+    "moment": "2.10.3",
     "node-persist": "0.0.6",
-    "request": "2.65.0"
+    "request": "2.65.0",
+    "require-reload": "0.2.2",
+    "uuid": "^2.0.3"
   },
   "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
   "bin": {},
@@ -23,12 +28,9 @@
     "colors": "^1.1.2",
     "extend": "^3.0.0",
     "fs": "0.0.1-security",
-    "keypress": "^0.2.1",
     "moment": "^2.15.2",
     "npm": "^3.10.9",
-    "os": "^0.1.1",
-    "require-reload": "^0.2.2",
-    "uuid": "^2.0.3"
+    "os": "^0.1.1"
   },
   "engines": {
     "node": ">=0.12.0 <6.3.1"
@@ -53,5 +55,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "0.0.16"
+  "version": "0.0.30"
 }
