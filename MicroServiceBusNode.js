@@ -1166,3 +1166,5 @@ function MicroServiceBusNode(settings) {
 }
 
 module.exports = MicroServiceBusNode; 
+
+MicroServiceBusNode.DebugClient = require('./lib/DebugHost.js')
