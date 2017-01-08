@@ -49,7 +49,7 @@ function MicroServiceBusNode(settings) {
     this.onUpdatedItineraryComplete = null;
     this.onLog = null;
     this.onCreateNode = null;
-
+    this.onCreateNodeFromMacAddress = null;
     // Handle settings
     var hostPrefix = 'node'; // Used for creating new hosts
     var _itineraries; // all downloaded itineries for this host
@@ -167,6 +167,7 @@ function MicroServiceBusNode(settings) {
         settings.debug = response.debug;
         settings.port = response.port == null ? 80 : response.port;
         settings.tags = response.tags;
+
         _comSettings = response;
 
         if (settings.state == "Active")
@@ -230,10 +231,20 @@ function MicroServiceBusNode(settings) {
         self.SignIn();
     }
     // Signing in the to HUB
-    MicroServiceBusNode.prototype.SignIn = function (newNodeName, temporaryVerificationCode) {
+    MicroServiceBusNode.prototype.SignIn = function (newNodeName, temporaryVerificationCode, useMacAddress) {
 
+        if (useMacAddress) {
+            require('getmac').getMac(function (err, macAddress) {
+                if (err) {
+                    self.onLog('Unable to fetch mac address.');
+                }
+                else {
+                    self.onCreateNodeFromMacAddress(macAddress);
+                }
+            })
+        }
         // Logging in using code
-        if (settings.nodeName == null || settings.nodeName.length == 0) { // jshint ignore:line
+        else if (settings.nodeName == null || settings.nodeName.length == 0) { // jshint ignore:line
             if (temporaryVerificationCode != undefined && temporaryVerificationCode.length == 0) { // jshint ignore:line
                 self.onLog('No hostname or temporary verification code has been provided.');
 
@@ -298,6 +309,9 @@ function MicroServiceBusNode(settings) {
     };
     MicroServiceBusNode.prototype.OnCreateNode = function (callback) {
         this.onCreateNode = callback;
+    };
+    MicroServiceBusNode.prototype.OnCreateNodeFromMacAddress = function (callback) {
+        this.onCreateNodeFromMacAddress = callback;
     };
 
     // Starting up all services
@@ -1165,6 +1179,6 @@ function MicroServiceBusNode(settings) {
 
 }
 
-module.exports = MicroServiceBusNode; 
+module.exports = MicroServiceBusNode;
 
 MicroServiceBusNode.DebugClient = require('./lib/DebugHost.js')
