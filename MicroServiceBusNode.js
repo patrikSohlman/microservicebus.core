@@ -228,7 +228,24 @@ function MicroServiceBusNode(settings) {
     /* istanbul ignore next */
     MicroServiceBusNode.prototype.NodeCreated = function (nodeData) {
 
-        self.SignIn();
+        if (nodeData.aws) {
+            fs.mkdir('./cert', function (err) {
+                if (err && err.code != 'EEXIST') {
+                    self.onLog('Unable to create cert forlder');
+                    return;
+                }
+                else {
+                    var awsSettings = { region: nodeData.aws.region };
+                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".cert.pem", nodeData.aws.certificatePem);
+                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".private.key", nodeData.aws.privateKey);
+                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".settings", JSON.stringify(awsSettings, null, 4));
+
+                    self.SignIn();
+                }
+            });
+        }
+        else
+            self.SignIn();
     }
     // Signing in the to HUB
     MicroServiceBusNode.prototype.SignIn = function (newNodeName, temporaryVerificationCode, useMacAddress) {

@@ -36,6 +36,7 @@
     <Compile Include="lib\Applicationinsights.js" />
     <Compile Include="lib\Com.js" />
     <Compile Include="lib\DebugHost.js" />
+    <Compile Include="lib\protocols\AWSIOT.js" />
     <Compile Include="lib\service.js" />
     <Compile Include="lib\protocols\AMQP.js" />
     <Compile Include="lib\protocols\_AMQP.js" />
