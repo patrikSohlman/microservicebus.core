@@ -657,7 +657,7 @@ function MicroServiceBusNode(settings) {
                     try {
                         //if (exist != null) {
                         if (false) {
-                            callback(null, scriptfileName, integrationId, scriptfileName);
+                            //callback(null, scriptfileName, integrationId, scriptfileName);
                             return;
                         }
                         else {
