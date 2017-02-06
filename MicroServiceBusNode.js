@@ -238,9 +238,21 @@ function MicroServiceBusNode(settings) {
                     var awsSettings = { region: nodeData.aws.region };
                     fs.writeFileSync("./cert/" + nodeData.nodeName + ".cert.pem", nodeData.aws.certificatePem);
                     fs.writeFileSync("./cert/" + nodeData.nodeName + ".private.key", nodeData.aws.privateKey);
-                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".settings", JSON.stringify(awsSettings, null, 4));
+                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".settings", JSON.stringify(awsSettings));
+                    self.onLog("AWS node certificates installed");
 
-                    self.SignIn();
+                    var caUri = "https://www.symantec.com/content/en/us/enterprise/verisign/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem";
+
+                    require("request")(caUri, function (err, response, certificateContent) {
+                        if (response.statusCode != 200 || err != null) {
+                            self.onLog("unable to get aws root certificate");
+                        }
+                        else {
+                            self.onLog("AWS root certificate installed");
+                            fs.writeFileSync("./cert/root-ca.crt", certificateContent);
+                            self.SignIn();
+                        }
+                    });
                 }
             });
         }
