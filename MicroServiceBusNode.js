@@ -193,6 +193,9 @@ function MicroServiceBusNode(settings) {
             self.onLog("Protocol: " + response.protocol.green)
             com = new Com(settings.nodeName, response, settings.hubUri);
 
+            com.OnStateReceivedCallback(function (stateMessage) {
+                receiveState(stateMessage);
+            });
             com.OnQueueMessageReceived(function (sbMessage) {
                 var message = sbMessage.body;
                 var service = sbMessage.applicationProperties.value.service;
@@ -399,6 +402,40 @@ function MicroServiceBusNode(settings) {
         callback();
     }
 
+    // Incoming state update
+    function receiveState(newstate) {
+        try {
+            var microService = _inboundServices.find(function (i) {
+                return i.baseType === "statereceiveadapter";
+            });
+            if (!microService)
+                return;
+            //getSuccessors
+            var message = {};
+            message.IsFirstAction = true;
+            message.ContentType != 'application/json'
+            message.body = newstate;
+            message.messageBuffer = new Buffer(newstate);
+            message._messageBuffer = new Buffer(newstate).toString('base64');
+
+            microService.OnCompleted(function (integrationMessage, destination) {
+                //    trackMessage(integrationMessage, destination, "Completed");
+            });
+
+            // Track incoming message
+            trackMessage(message, microService.Name, "Started");
+
+            // Submit state to service
+            microService.Process(newstate, null);
+
+        }
+        catch (err) {
+            self.onLog("Error at: ".red + microService.Name);
+            self.onLog("Error id: ".red + err.name);
+            self.onLog("Error description: ".red + err.message);
+            trackException(message, microService.Name, "Failed", err.name, err.message);
+        }
+    }
     // Incoming messages
     function receiveMessage(message, destination) {
         try {
@@ -717,7 +754,7 @@ function MicroServiceBusNode(settings) {
                         newMicroService.Init(activity.userData.config);
                         newMicroService.UseEncryption = settings.useEncryption;
                         newMicroService.ComSettings = _comSettings;
-
+                        newMicroService.baseType = activity.userData.baseType;
                         // Eventhandler for messages sent back from the service
                         newMicroService.OnMessageReceived(function (integrationMessage, sender) {
                             try {
