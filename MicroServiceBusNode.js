@@ -755,6 +755,10 @@ function MicroServiceBusNode(settings) {
                         newMicroService.UseEncryption = settings.useEncryption;
                         newMicroService.ComSettings = _comSettings;
                         newMicroService.baseType = activity.userData.baseType;
+
+                        newMicroService.OnReceivedState(function (state, sender) {
+                            com.ChangeState(state, sender);
+                        });
                         // Eventhandler for messages sent back from the service
                         newMicroService.OnMessageReceived(function (integrationMessage, sender) {
                             try {
