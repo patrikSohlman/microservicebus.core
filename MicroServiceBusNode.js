@@ -158,6 +158,13 @@ function MicroServiceBusNode(settings) {
     MicroServiceBusNode.prototype.SignInComplete = function (response) {
         //_isWaitingForSignInResponse = false;
 
+        if (response.sas != undefined) {
+            settings.sas = response.sas;
+            var data = JSON.stringify(settings);
+            var root = require('path').dirname(process.argv[1]);
+            fs.writeFileSync(root + '/lib/settings.json', data);
+        }
+
         if (settings.debug != null && settings.debug == true) {// jshint ignore:line
             self.onLog(settings.nodeName.gray + ' successfully logged in'.green);
         }
@@ -297,7 +304,8 @@ function MicroServiceBusNode(settings) {
                 Name: settings.nodeName,
                 machineName: settings.machineName,
                 OrganizationID: settings.organizationId,
-                npmVersion: this.nodeVersion
+                npmVersion: this.nodeVersion,
+                sas: settings.sas
             };
 
             this.onSignedIn(hostData);
