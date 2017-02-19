@@ -49,7 +49,7 @@ function MicroServiceBusNode(settings) {
     this.onUpdatedItineraryComplete = null;
     this.onLog = null;
     this.onCreateNode = null;
-
+    this.onCreateNodeFromMacAddress = null;
     // Handle settings
     var hostPrefix = 'node'; // Used for creating new hosts
     var _itineraries; // all downloaded itineries for this host
@@ -158,6 +158,13 @@ function MicroServiceBusNode(settings) {
     MicroServiceBusNode.prototype.SignInComplete = function (response) {
         //_isWaitingForSignInResponse = false;
 
+        if (response.sas != undefined) {
+            settings.sas = response.sas;
+            var data = JSON.stringify(settings);
+            var root = require('path').dirname(process.argv[1]);
+            fs.writeFileSync(root + '/lib/settings.json', data);
+        }
+
         if (settings.debug != null && settings.debug == true) {// jshint ignore:line
             self.onLog(settings.nodeName.gray + ' successfully logged in'.green);
         }
@@ -167,6 +174,7 @@ function MicroServiceBusNode(settings) {
         settings.debug = response.debug;
         settings.port = response.port == null ? 80 : response.port;
         settings.tags = response.tags;
+
         _comSettings = response;
 
         if (settings.state == "Active")
@@ -192,6 +200,9 @@ function MicroServiceBusNode(settings) {
             self.onLog("Protocol: " + response.protocol.green)
             com = new Com(settings.nodeName, response, settings.hubUri);
 
+            com.OnStateReceivedCallback(function (stateMessage) {
+                receiveState(stateMessage);
+            });
             com.OnQueueMessageReceived(function (sbMessage) {
                 var message = sbMessage.body;
                 var service = sbMessage.applicationProperties.value.service;
@@ -227,13 +238,52 @@ function MicroServiceBusNode(settings) {
     /* istanbul ignore next */
     MicroServiceBusNode.prototype.NodeCreated = function (nodeData) {
 
-        self.SignIn();
+        if (nodeData.aws) {
+            fs.mkdir('./cert', function (err) {
+                if (err && err.code != 'EEXIST') {
+                    self.onLog('Unable to create cert forlder');
+                    return;
+                }
+                else {
+                    var awsSettings = { region: nodeData.aws.region };
+                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".cert.pem", nodeData.aws.certificatePem);
+                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".private.key", nodeData.aws.privateKey);
+                    fs.writeFileSync("./cert/" + nodeData.nodeName + ".settings", JSON.stringify(awsSettings));
+                    self.onLog("AWS node certificates installed");
+
+                    var caUri = "https://www.symantec.com/content/en/us/enterprise/verisign/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem";
+
+                    require("request")(caUri, function (err, response, certificateContent) {
+                        if (response.statusCode != 200 || err != null) {
+                            self.onLog("unable to get aws root certificate");
+                        }
+                        else {
+                            self.onLog("AWS root certificate installed");
+                            fs.writeFileSync("./cert/root-ca.crt", certificateContent);
+                            self.SignIn();
+                        }
+                    });
+                }
+            });
+        }
+        else
+            self.SignIn();
     }
     // Signing in the to HUB
-    MicroServiceBusNode.prototype.SignIn = function (newNodeName, temporaryVerificationCode) {
+    MicroServiceBusNode.prototype.SignIn = function (newNodeName, temporaryVerificationCode, useMacAddress) {
 
+        if (useMacAddress) {
+            require('getmac').getMac(function (err, macAddress) {
+                if (err) {
+                    self.onLog('Unable to fetch mac address.');
+                }
+                else {
+                    self.onCreateNodeFromMacAddress(macAddress);
+                }
+            })
+        }
         // Logging in using code
-        if (settings.nodeName == null || settings.nodeName.length == 0) { // jshint ignore:line
+        else if (settings.nodeName == null || settings.nodeName.length == 0) { // jshint ignore:line
             if (temporaryVerificationCode != undefined && temporaryVerificationCode.length == 0) { // jshint ignore:line
                 self.onLog('No hostname or temporary verification code has been provided.');
 
@@ -254,7 +304,8 @@ function MicroServiceBusNode(settings) {
                 Name: settings.nodeName,
                 machineName: settings.machineName,
                 OrganizationID: settings.organizationId,
-                npmVersion: this.nodeVersion
+                npmVersion: this.nodeVersion,
+                sas: settings.sas
             };
 
             this.onSignedIn(hostData);
@@ -298,6 +349,9 @@ function MicroServiceBusNode(settings) {
     };
     MicroServiceBusNode.prototype.OnCreateNode = function (callback) {
         this.onCreateNode = callback;
+    };
+    MicroServiceBusNode.prototype.OnCreateNodeFromMacAddress = function (callback) {
+        this.onCreateNodeFromMacAddress = callback;
     };
 
     // Starting up all services
@@ -356,6 +410,40 @@ function MicroServiceBusNode(settings) {
         callback();
     }
 
+    // Incoming state update
+    function receiveState(newstate) {
+        try {
+            var microService = _inboundServices.find(function (i) {
+                return i.baseType === "statereceiveadapter";
+            });
+            if (!microService)
+                return;
+            //getSuccessors
+            var message = {};
+            message.IsFirstAction = true;
+            message.ContentType != 'application/json'
+            message.body = newstate;
+            message.messageBuffer = new Buffer(newstate);
+            message._messageBuffer = new Buffer(newstate).toString('base64');
+
+            microService.OnCompleted(function (integrationMessage, destination) {
+                //    trackMessage(integrationMessage, destination, "Completed");
+            });
+
+            // Track incoming message
+            trackMessage(message, microService.Name, "Started");
+
+            // Submit state to service
+            microService.Process(newstate, null);
+
+        }
+        catch (err) {
+            self.onLog("Error at: ".red + microService.Name);
+            self.onLog("Error id: ".red + err.name);
+            self.onLog("Error description: ".red + err.message);
+            trackException(message, microService.Name, "Failed", err.name, err.message);
+        }
+    }
     // Incoming messages
     function receiveMessage(message, destination) {
         try {
@@ -424,6 +512,10 @@ function MicroServiceBusNode(settings) {
             if (message.Encrypted) {
                 buf = util.decrypt(buf);
             }
+
+            // CONSIDER CHANGE
+            // const decoder = new StringEncoder('utf8');
+            // var messageString = decoder.write(buf);
 
             var messageString = buf.toString('utf8');
 
@@ -626,7 +718,7 @@ function MicroServiceBusNode(settings) {
                     try {
                         //if (exist != null) {
                         if (false) {
-                            callback(null, scriptfileName, integrationId, scriptfileName);
+                            //callback(null, scriptfileName, integrationId, scriptfileName);
                             return;
                         }
                         else {
@@ -674,7 +766,11 @@ function MicroServiceBusNode(settings) {
                         newMicroService.Init(activity.userData.config);
                         newMicroService.UseEncryption = settings.useEncryption;
                         newMicroService.ComSettings = _comSettings;
+                        newMicroService.baseType = activity.userData.baseType;
 
+                        newMicroService.OnReceivedState(function (state, sender) {
+                            com.ChangeState(state, sender);
+                        });
                         // Eventhandler for messages sent back from the service
                         newMicroService.OnMessageReceived(function (integrationMessage, sender) {
                             try {
@@ -1165,4 +1261,6 @@ function MicroServiceBusNode(settings) {
 
 }
 
-module.exports = MicroServiceBusNode; 
+module.exports = MicroServiceBusNode;
+
+MicroServiceBusNode.DebugClient = require('./lib/DebugHost.js')

@@ -6,17 +6,19 @@
   },
   "license": "MIT",
   "dependencies": {
-    "colors": "1.1.2",
     "body-parser": "1.14.1",
     "chokidar": "1.0.5",
+    "colors": "1.1.2",
     "exists-sync": "0.0.3",
     "express": "4.13.3",
     "extend": "3.0.0",
+    "getmac": "^1.2.1",
     "keypress": "^0.2.1",
     "linq": "3.0.5",
     "moment": "2.10.3",
     "node-persist": "0.0.6",
-    "request": "2.65.0",
+    "progress": "^1.1.8",
+    "request": "^2.79.0",
     "require-reload": "0.2.2",
     "uuid": "^2.0.3"
   },
@@ -55,5 +57,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "1.0.0"
+  "version": "1.0.18"
 }
