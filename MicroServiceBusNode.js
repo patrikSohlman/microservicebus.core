@@ -513,6 +513,10 @@ function MicroServiceBusNode(settings) {
                 buf = util.decrypt(buf);
             }
 
+            // CONSIDER CHANGE
+            // const decoder = new StringEncoder('utf8');
+            // var messageString = decoder.write(buf);
+
             var messageString = buf.toString('utf8');
 
             // Submit message to service
