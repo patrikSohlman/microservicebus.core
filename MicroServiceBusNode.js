@@ -160,7 +160,12 @@ function MicroServiceBusNode(settings) {
 
         if (response.sas != undefined) {
             settings.sas = response.sas;
-            var data = JSON.stringify(settings);
+            settings.debug = undefined;
+            settings.state = undefined;
+            settings.port = undefined;
+            settings.tags = undefined;
+
+            var data = JSON.stringify(settings, null, "\t");
             var root = require('path').dirname(process.argv[1]);
             fs.writeFileSync(root + '/lib/settings.json', data);
         }
