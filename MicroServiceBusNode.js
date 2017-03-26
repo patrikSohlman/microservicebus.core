@@ -48,6 +48,7 @@ function MicroServiceBusNode(settings) {
     this.onPingResponse = null;
     this.onUpdatedItineraryComplete = null;
     this.onLog = null;
+    this.onAction = null;
     this.onCreateNode = null;
     this.onCreateNodeFromMacAddress = null;
     // Handle settings
@@ -224,6 +225,21 @@ function MicroServiceBusNode(settings) {
                     self.onLog("COM: ".green + message);
                 }
             });
+            com.OnActionCallback(function (message) {
+                if (message.source == "core") {
+                    switch (message.action) {
+                        default:
+                            self.onLog("Unsupported action: " + message.action);
+                            break;
+                    }
+
+                }
+                else {
+                    if (self.onAction) {
+                        self.onAction(message);
+                    }
+                }
+            });
 
             port = process.env.PORT || 1337;
         }
@@ -351,6 +367,9 @@ function MicroServiceBusNode(settings) {
     };
     MicroServiceBusNode.prototype.OnLog = function (callback) {
         this.onLog = callback;
+    };
+    MicroServiceBusNode.prototype.OnAction = function (callback) {
+        this.onAction = callback;
     };
     MicroServiceBusNode.prototype.OnCreateNode = function (callback) {
         this.onCreateNode = callback;
