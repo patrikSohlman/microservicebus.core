@@ -167,8 +167,18 @@ function MicroServiceBusNode(settings) {
             settings.tags = undefined;
 
             var data = JSON.stringify(settings, null, "\t");
-            var root = require('path').dirname(process.argv[1]);
-            fs.writeFileSync(root + '/lib/settings.json', data);
+
+            var basePath = path.normalize(__dirname + "/../../lib/settings.json")
+            console.log('basePath:' + basePath);
+            // var basePath = require('path').dirname(process.argv[1]);
+            // console.log('basePath:' + basePath);
+            // console.log('__dirname:' + __dirname);
+            // if (basePath.endsWith('_mocha/\bin')) {// for testing only
+            //     console.log('found it');
+
+            // }
+
+            fs.writeFileSync(basePath, data);
         }
 
         if (settings.debug != null && settings.debug == true) {// jshint ignore:line
@@ -1054,8 +1064,8 @@ function MicroServiceBusNode(settings) {
             });
 
 
-            if (settings.enableKeyPress == false)
-                var port = process.env.PORT || 1337;
+            // if (settings.enableKeyPress == false)
+            //     var port = process.env.PORT || 1337;
 
             //app.use(function (req, res, next) {
             //    var credentials = auth(req)
