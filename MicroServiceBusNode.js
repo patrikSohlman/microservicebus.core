@@ -167,17 +167,12 @@ function MicroServiceBusNode(settings) {
             settings.tags = undefined;
 
             var data = JSON.stringify(settings, null, "\t");
-
             var basePath = path.normalize(__dirname + "/../../lib/settings.json")
+
+            if (response.basePath)
+                basePath = path.normalize(response.basePath + "/settings.json")
+
             console.log('basePath:' + basePath);
-            // var basePath = require('path').dirname(process.argv[1]);
-            // console.log('basePath:' + basePath);
-            // console.log('__dirname:' + __dirname);
-            // if (basePath.endsWith('_mocha/\bin')) {// for testing only
-            //     console.log('found it');
-
-            // }
-
             fs.writeFileSync(basePath, data);
         }
 
