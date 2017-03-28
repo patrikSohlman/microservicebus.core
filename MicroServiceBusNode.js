@@ -48,6 +48,7 @@ function MicroServiceBusNode(settings) {
     this.onPingResponse = null;
     this.onUpdatedItineraryComplete = null;
     this.onLog = null;
+    this.onAction = null;
     this.onCreateNode = null;
     this.onCreateNodeFromMacAddress = null;
     // Handle settings
@@ -160,9 +161,19 @@ function MicroServiceBusNode(settings) {
 
         if (response.sas != undefined) {
             settings.sas = response.sas;
-            var data = JSON.stringify(settings);
-            var root = require('path').dirname(process.argv[1]);
-            fs.writeFileSync(root + '/lib/settings.json', data);
+            settings.debug = undefined;
+            settings.state = undefined;
+            settings.port = undefined;
+            settings.tags = undefined;
+
+            var data = JSON.stringify(settings, null, "\t");
+            var basePath = path.normalize(__dirname + "/../../lib/settings.json")
+
+            if (response.basePath)
+                basePath = path.normalize(response.basePath + "/settings.json")
+
+            console.log('basePath:' + basePath);
+            fs.writeFileSync(basePath, data);
         }
 
         if (settings.debug != null && settings.debug == true) {// jshint ignore:line
@@ -217,6 +228,21 @@ function MicroServiceBusNode(settings) {
             com.OnQueueDebugCallback(function (message) {
                 if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                     self.onLog("COM: ".green + message);
+                }
+            });
+            com.OnActionCallback(function (message) {
+                if (message.source == "core") {
+                    switch (message.action) {
+                        default:
+                            self.onLog("Unsupported action: " + message.action);
+                            break;
+                    }
+
+                }
+                else {
+                    if (self.onAction) {
+                        self.onAction(message);
+                    }
                 }
             });
 
@@ -346,6 +372,9 @@ function MicroServiceBusNode(settings) {
     };
     MicroServiceBusNode.prototype.OnLog = function (callback) {
         this.onLog = callback;
+    };
+    MicroServiceBusNode.prototype.OnAction = function (callback) {
+        this.onAction = callback;
     };
     MicroServiceBusNode.prototype.OnCreateNode = function (callback) {
         this.onCreateNode = callback;
@@ -1030,8 +1059,8 @@ function MicroServiceBusNode(settings) {
             });
 
 
-            if (settings.enableKeyPress == false)
-                var port = process.env.PORT || 1337;
+            // if (settings.enableKeyPress == false)
+            //     var port = process.env.PORT || 1337;
 
             //app.use(function (req, res, next) {
             //    var credentials = auth(req)
