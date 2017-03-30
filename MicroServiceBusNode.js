@@ -172,7 +172,6 @@ function MicroServiceBusNode(settings) {
             if (response.basePath)
                 basePath = path.normalize(response.basePath + "/settings.json")
 
-            console.log('basePath:' + basePath);
             fs.writeFileSync(basePath, data);
         }
 
@@ -394,54 +393,69 @@ function MicroServiceBusNode(settings) {
 
     // Stopping all services
     function stopAllServices(callback) {
-        if (com != null) {
-            com.Stop();
-        }
-        if (_startWebServer) {
-            self.onLog("Server:      " + "Shutting down web server".yellow);
-            server.close();
-            app = null;
-            app = express();
-        }
-
-        if (_inboundServices.length > 0) {
-            self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-            self.onLog("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
-            self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-
-            for (var i = 0; i < _inboundServices.length; i++) {
-                var service = _inboundServices[i];
-                try {
-                    service.Stop();
-                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
-                    self.onLog(lineStatus);
-                    service = undefined;
-                    //delete service;
-                }
-                catch (ex) {
-                    self.onLog('Unable to stop '.red + service.Name.red);
-                    self.onLog(ex.message.red);
-                }
+        com.Stop(function () {
+            if (_startWebServer) {
+                self.onLog("Server:      " + "Shutting down web server".yellow);
+                server.close();
+                app = null;
+                app = express();
             }
 
-            if (server != undefined && server != null)
-                server.close();
+            if (_inboundServices.length > 0) {
+                self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+                self.onLog("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
+                self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
 
-            _startWebServer = false;
-            _downloadedScripts = undefined;
-            //delete _downloadedScripts;
-            _inboundServices = undefined;
-            //delete _inboundServices;
+                for (var i = 0; i < _inboundServices.length; i++) {
+                    var service = _inboundServices[i];
+                    try {
+                        service.Stop();
+                        var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
+                        self.onLog(lineStatus);
+                        service = undefined;
+                        //delete service;
+                    }
+                    catch (ex) {
+                        self.onLog('Unable to stop '.red + service.Name.red);
+                        self.onLog(ex.message.red);
+                    }
+                }
 
-            _downloadedScripts = [];
-            _inboundServices = [];
-        }
-        callback();
+                if (server != undefined && server != null)
+                    server.close();
+
+                _startWebServer = false;
+                _downloadedScripts = undefined;
+                //delete _downloadedScripts;
+                _inboundServices = undefined;
+                //delete _inboundServices;
+
+                _downloadedScripts = [];
+                _inboundServices = [];
+            }
+            self.onLog("Stop complete".green);
+            callback();
+        });
     }
 
     // Incoming state update
     function receiveState(newstate) {
         try {
+
+            if (newstate.desired.msbaction) {
+                if (newstate.desired.msbaction.action) {
+                    if (!newstate.reported || (newstate.desired.msbaction.id !== newstate.reported.msbaction.id)) {
+                        self.onLog("MSBACTION: ".green + newstate.desired.msbaction.action.grey);
+                        com.currentState.reported = { msbaction: com.currentState.desired.msbaction };
+                        var reportState = {
+                            reported: { msbaction: com.currentState.desired.msbaction }
+                        };
+                        com.ChangeState(reportState, settings.nodeName);
+                    }
+                    return;
+                }
+            }
+
             var microService = _inboundServices.find(function (i) {
                 return i.baseType === "statereceiveadapter";
             });
