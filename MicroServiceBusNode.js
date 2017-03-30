@@ -207,7 +207,7 @@ function MicroServiceBusNode(settings) {
         if (_firstStart) {
             _firstStart = false;
 
-            self.onLog("Protocol: " + response.protocol.green)
+            self.onLog("IoT Provider: " + response.protocol.green)
             com = new Com(settings.nodeName, response, settings.hubUri);
 
             com.OnStateReceivedCallback(function (stateMessage) {
@@ -394,12 +394,16 @@ function MicroServiceBusNode(settings) {
     // Stopping COM and all services
     function stopAllServices(callback) {
 
-        com.Stop(function () {
+        stopAllServicesSync();
 
-            stopAllServicesSync();
+        callback();
 
-            callback();
-        });
+        //com.Stop(function () {
+
+        //    stopAllServicesSync();
+
+        //    callback();
+        //});
     }
 
     // Stopping all services
@@ -705,38 +709,40 @@ function MicroServiceBusNode(settings) {
             },
             function (err, results) {
                 // Start com to receive messages
-                if (settings.state === 'Active') {
-                    com.Start(function () {
-                        self.onLog("");
-                        self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-                        self.onLog("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
-                        self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+                //if (settings.state === 'Active') {
+                com.Start(function () {
+                    self.onLog("");
+                    self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+                    self.onLog("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
+                    self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
 
-                        for (var i = 0; i < _inboundServices.length; i++) {
-                            var newMicroService = _inboundServices[i];
+                    for (var i = 0; i < _inboundServices.length; i++) {
+                        var newMicroService = _inboundServices[i];
 
-                            var serviceStatus = "Started".green;
+                        var serviceStatus = "Started".green;
 
-                            if (settings.state == "Active")
-                                newMicroService.Start();
-                            else
-                                serviceStatus = "Stopped".yellow;
+                        if (settings.state == "Active")
+                            newMicroService.Start();
+                        else
+                            serviceStatus = "Stopped".yellow;
 
-                            var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
-                            self.onLog(lineStatus);
-                        }
-                        self.onLog();
-                        self.onStarted(itineraries.length, exceptionsLoadingItineraries);
+                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
+                        self.onLog(lineStatus);
+                    }
+                    self.onLog();
+                    self.onStarted(itineraries.length, exceptionsLoadingItineraries);
 
-                        if (self.onUpdatedItineraryComplete != null)
-                            self.onUpdatedItineraryComplete();
+                    if (self.onUpdatedItineraryComplete != null)
+                        self.onUpdatedItineraryComplete();
 
-                        startListen();
+                    startListen();
 
-                        _loadingState = "done";
-                        callback();
-                    });
-                }
+                    _loadingState = "done";
+                    callback();
+                });
+                //}
+                //else
+                //    callback();
             });
     }
 
@@ -1344,4 +1350,4 @@ function MicroServiceBusNode(settings) {
 
 module.exports = MicroServiceBusNode;
 
-MicroServiceBusNode.DebugClient = require('./lib/DebugHost.js')
+MicroServiceBusNode.DebugClient = require('./lib/DebugHost.js');
