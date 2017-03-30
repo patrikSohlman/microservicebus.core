@@ -123,6 +123,7 @@ function MicroServiceBusNode(settings) {
     }
     // Called by HUB when itineraries has been updated
     MicroServiceBusNode.prototype.ChangeState = function (state) {
+
         self.onLog();
         //_isWaitingForSignInResponse = false;
         settings.state = state;
@@ -139,7 +140,6 @@ function MicroServiceBusNode(settings) {
         else {
             _downloadedScripts = [];
             _inboundServices = [];
-            //loadItineraries(settings.organizationId, _itineraries);
             startAllServices(_itineraries, function () {
 
             });
@@ -391,57 +391,63 @@ function MicroServiceBusNode(settings) {
         });
     }
 
-    // Stopping all services
+    // Stopping COM and all services
     function stopAllServices(callback) {
+
         com.Stop(function () {
-            if (_startWebServer) {
-                self.onLog("Server:      " + "Shutting down web server".yellow);
-                server.close();
-                app = null;
-                app = express();
-            }
 
-            if (_inboundServices.length > 0) {
-                self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-                self.onLog("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
-                self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            stopAllServicesSync();
 
-                for (var i = 0; i < _inboundServices.length; i++) {
-                    var service = _inboundServices[i];
-                    try {
-                        service.Stop();
-                        var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
-                        self.onLog(lineStatus);
-                        service = undefined;
-                        //delete service;
-                    }
-                    catch (ex) {
-                        self.onLog('Unable to stop '.red + service.Name.red);
-                        self.onLog(ex.message.red);
-                    }
-                }
-
-                if (server != undefined && server != null)
-                    server.close();
-
-                _startWebServer = false;
-                _downloadedScripts = undefined;
-                //delete _downloadedScripts;
-                _inboundServices = undefined;
-                //delete _inboundServices;
-
-                _downloadedScripts = [];
-                _inboundServices = [];
-            }
-            self.onLog("Stop complete".green);
             callback();
         });
+    }
+
+    // Stopping all services
+    function stopAllServicesSync() {
+        if (_startWebServer) {
+            self.onLog("Server:      " + "Shutting down web server".yellow);
+            server.close();
+            app = null;
+            app = express();
+        }
+
+        if (_inboundServices.length > 0) {
+            self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            self.onLog("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
+            self.onLog("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+
+            for (var i = 0; i < _inboundServices.length; i++) {
+                var service = _inboundServices[i];
+                try {
+                    service.Stop();
+                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
+                    self.onLog(lineStatus);
+                    service = undefined;
+                    //delete service;
+                }
+                catch (ex) {
+                    self.onLog('Unable to stop '.red + service.Name.red);
+                    self.onLog(ex.message.red);
+                }
+            }
+
+            if (server != undefined && server != null)
+                server.close();
+
+            _startWebServer = false;
+            _downloadedScripts = undefined;
+            //delete _downloadedScripts;
+            _inboundServices = undefined;
+            //delete _inboundServices;
+
+            _downloadedScripts = [];
+            _inboundServices = [];
+        }
     }
 
     // Incoming state update
     function receiveState(newstate) {
         try {
-
             if (newstate.desired.msbaction) {
                 if (newstate.desired.msbaction.action) {
                     if (!newstate.reported || (newstate.desired.msbaction.id !== newstate.reported.msbaction.id)) {
@@ -451,6 +457,12 @@ function MicroServiceBusNode(settings) {
                             reported: { msbaction: com.currentState.desired.msbaction }
                         };
                         com.ChangeState(reportState, settings.nodeName);
+
+                        // Wait a bit for the state to update...
+                        setTimeout(function () {
+                            performActions(com.currentState.desired.msbaction);
+                        }, 5000);
+
                     }
                     return;
                 }
@@ -487,6 +499,7 @@ function MicroServiceBusNode(settings) {
             trackException(message, microService.Name, "Failed", err.name, err.message);
         }
     }
+
     // Incoming messages
     function receiveMessage(message, destination) {
         try {
@@ -619,6 +632,31 @@ function MicroServiceBusNode(settings) {
                 }
             }
         });
+    }
+
+    // Handle incomming maintinance actions
+    function performActions(msbAction) {
+        switch (msbAction.action) {
+            case 'stop':
+                self.onLog("State changed to " + "Active".yellow);
+                stopAllServicesSync(function () {
+                    self.onLog("All services stopped".yellow);
+                });
+                break;
+            case 'start':
+                self.onLog("State changed to " + "InActive".green);
+                _downloadedScripts = [];
+                _inboundServices = [];
+                startAllServices(_itineraries, function () { });
+                break;
+            case 'restart':
+                break;
+            case 'reboot':
+                break;
+            case 'script':
+                break;
+            default:
+        }
     }
 
     // Called after successfull signin.
