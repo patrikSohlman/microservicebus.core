@@ -145,6 +145,17 @@ function MicroServiceBusNode(settings) {
             });
         }
     }
+    // Called by HUB to enable or disable tracking
+    MicroServiceBusNode.prototype.SetTracking = function (enableTracking) {
+
+        self.onLog();
+        settings.enableTracking = enableTracking;
+        if (enableTracking)
+            self.onLog("Tracking changed to " + "Enabled".green);
+        else
+            self.onLog("Tracking changed to " + "Disabled".grey);
+
+    }
     // Update debug mode
     MicroServiceBusNode.prototype.ChangeDebug = function (debug) {
         self.onLog("Debug state changed to ".grey + debug);
@@ -184,8 +195,14 @@ function MicroServiceBusNode(settings) {
         settings.debug = response.debug;
         settings.port = response.port == null ? 80 : response.port;
         settings.tags = response.tags;
+        settings.enableTracking = response.enableTracking;
 
         _comSettings = response;
+
+        if (settings.enableTracking)
+            self.onLog("Tracking: " + "Enabled".green);
+        else
+            self.onLog("Tracking: " + "Disabled".grey);
 
         if (settings.state == "Active")
             self.onLog("State: " + settings.state.green);
@@ -454,7 +471,7 @@ function MicroServiceBusNode(settings) {
         try {
             if (newstate.desired.msbaction) {
                 if (newstate.desired.msbaction.action) {
-                    if (!newstate.reported || (newstate.desired.msbaction.id !== newstate.reported.msbaction.id)) {
+                    if (!newstate.reported || (newstate.reported.msbaction && (newstate.desired.msbaction.id !== newstate.reported.msbaction.id))) {
                         self.onLog("MSBACTION: ".green + newstate.desired.msbaction.action.grey);
                         com.currentState.reported = { msbaction: com.currentState.desired.msbaction };
                         var reportState = {
@@ -842,6 +859,7 @@ function MicroServiceBusNode(settings) {
 
                         var newMicroService = new MicroService(reload(localFilePath));
 
+                        newMicroService.NodeName = settings.nodeName;
                         newMicroService.OrganizationId = organizationId;
                         newMicroService.ItineraryId = itinerary.itineraryId;
                         newMicroService.Name = activity.userData.id;
@@ -1267,6 +1285,8 @@ function MicroServiceBusNode(settings) {
 
     // Submits tracking data to host
     function trackMessage(msg, lastActionId, status) {
+        if (!settings.enableTracking)
+            return;
 
         if (typeof msg._messageBuffer != "string") {
             msg._messageBuffer = msg._messageBuffer.toString('base64');
@@ -1314,6 +1334,8 @@ function MicroServiceBusNode(settings) {
 
     // Submits exception message for tracking
     function trackException(msg, lastActionId, status, fault, faultDescription) {
+        if (!settings.enableTracking)
+            return;
 
         var time = moment();
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
