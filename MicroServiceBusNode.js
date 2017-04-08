@@ -471,7 +471,7 @@ function MicroServiceBusNode(settings) {
         try {
             if (newstate.desired.msbaction) {
                 if (newstate.desired.msbaction.action) {
-                    if (!newstate.reported || (newstate.reported.msbaction && (newstate.desired.msbaction.id !== newstate.reported.msbaction.id))) {
+                    if (!newstate.reported || !newstate.reported.msbaction || (newstate.reported.msbaction && (newstate.desired.msbaction.id !== newstate.reported.msbaction.id))) {
                         self.onLog("MSBACTION: ".green + newstate.desired.msbaction.action.grey);
                         com.currentState.reported = { msbaction: com.currentState.desired.msbaction };
                         var reportState = {
@@ -859,7 +859,6 @@ function MicroServiceBusNode(settings) {
 
                         var newMicroService = new MicroService(reload(localFilePath));
 
-                        newMicroService.NodeName = settings.nodeName;
                         newMicroService.OrganizationId = organizationId;
                         newMicroService.ItineraryId = itinerary.itineraryId;
                         newMicroService.Name = activity.userData.id;
