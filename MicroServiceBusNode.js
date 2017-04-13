@@ -858,7 +858,7 @@ function MicroServiceBusNode(settings) {
                         //var newMicroService = extend(new MicroService(), reload(localFilePath));
 
                         var newMicroService = new MicroService(reload(localFilePath));
-
+                        newMicroService.NodeName = settings.nodeName;
                         newMicroService.OrganizationId = organizationId;
                         newMicroService.ItineraryId = itinerary.itineraryId;
                         newMicroService.Name = activity.userData.id;
