@@ -659,13 +659,15 @@ function MicroServiceBusNode(settings) {
     function performActions(msbAction) {
         switch (msbAction.action) {
             case 'stop':
-                self.onLog("State changed to " + "Active".yellow);
+                self.onLog("State changed to " + "Inactive".yellow);
+                settings.state = "InActive"
                 stopAllServicesSync(function () {
                     self.onLog("All services stopped".yellow);
                 });
                 break;
             case 'start':
-                self.onLog("State changed to " + "InActive".green);
+                self.onLog("State changed to " + "Active".green);
+                settings.state = "Active"
                 _downloadedScripts = [];
                 _inboundServices = [];
                 startAllServices(_itineraries, function () { });
@@ -737,7 +739,6 @@ function MicroServiceBusNode(settings) {
                         var newMicroService = _inboundServices[i];
 
                         var serviceStatus = "Started".green;
-
                         if (settings.state == "Active")
                             newMicroService.Start();
                         else
@@ -1333,8 +1334,6 @@ function MicroServiceBusNode(settings) {
 
     // Submits exception message for tracking
     function trackException(msg, lastActionId, status, fault, faultDescription) {
-        if (!settings.enableTracking)
-            return;
 
         var time = moment();
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
