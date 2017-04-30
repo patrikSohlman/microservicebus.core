@@ -872,6 +872,7 @@ function MicroServiceBusNode(settings) {
                         newMicroService.UseEncryption = settings.useEncryption;
                         newMicroService.ComSettings = _comSettings;
                         newMicroService.baseType = activity.userData.baseType;
+                        newMicroService.Com = com;
 
                         newMicroService.OnReceivedState(function (state, sender) {
                             com.ChangeState(state, sender);
